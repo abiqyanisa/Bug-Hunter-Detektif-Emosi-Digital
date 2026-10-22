@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#10182a">
+<title>BUG HUNTER — Detektif Emosi Digital</title>
+<style>
+  :root {
+    --bg:#0b1120; --panel:#10182a; --panel2:#192941; --panel3:#253a5a;
+    --line:#526a8c; --mint:#8af5c5; --yellow:#f6c85f; --text:#eef4ff;
+    --muted:#afc3de; --pink:#f08c98; --blue:#77c7ff;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; color:var(--text);
+    background:
+      linear-gradient(rgba(138,245,197,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(138,245,197,.035) 1px, transparent 1px),
+      var(--bg);
+    background-size:24px 24px; font-family: "Courier New", ui-monospace, monospace;
+    line-height:1.55;
+  }
+  button { font:inherit; cursor:pointer; }
+  .wrap { width:min(100% - 28px, 900px); margin:28px auto 42px; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; color:var(--muted); font-size:.8rem; }
+  .pill { border:1px solid var(--line); padding:5px 9px; border-radius:3px; background:#111d31; }
+  .shell { background:rgba(16,24,42,.97); border:2px solid var(--line); box-shadow:7px 7px 0 #050914; padding:clamp(16px,4vw,30px); }
+  .hero { display:flex; align-items:center; gap:18px; }
+  .robot {
+    flex:0 0 92px; width:92px; height:92px; display:grid; place-items:center;
+    font-size:3rem; background:var(--panel2); border:3px solid var(--mint);
+    box-shadow:inset 0 0 0 5px #10182a, 5px 5px 0 #050914; image-rendering:pixelated;
+  }
+  h1,h2,h3,p { margin-top:0; }
+  h1 { color:var(--mint); font-size:clamp(1.35rem,4vw,2.2rem); margin-bottom:4px; letter-spacing:.02em; }
+  .subtitle { color:var(--muted); margin:0; font-size:.88rem; }
+  .terminal { color:var(--yellow); font-size:.82rem; margin:18px 0 0; }
+  .intro { background:var(--panel2); border:1px solid var(--line); padding:18px; margin-top:22px; }
+  .intro h2 { color:var(--mint); font-size:1.05rem; }
+  .intro p { margin-bottom:10px; }
+  .intro ul { margin-bottom:0; padding-left:22px; color:var(--muted); }
+  .primary,.secondary {
+    border:2px solid var(--mint); background:var(--mint); color:#102033;
+    padding:12px 16px; font-weight:bold; box-shadow:4px 4px 0 #050914;
+    transition:transform .12s, box-shadow .12s; border-radius:2px;
+  }
+  .primary:hover,.secondary:hover { transform:translate(-1px,-1px); box-shadow:5px 5px 0 #050914; }
+  .primary:focus-visible,.secondary:focus-visible,.choice:focus-visible { outline:3px solid var(--yellow); outline-offset:3px; }
+  .secondary { background:var(--panel3); color:var(--text); border-color:var(--line); }
+  .start { width:100%; margin-top:18px; }
+  .game-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:22px 0 10px; flex-wrap:wrap; }
+  .level { color:var(--mint); font-weight:bold; }
+  .progress { display:flex; gap:5px; margin-bottom:18px; }
+  .progress span { height:9px; flex:1; background:#34435b; border:1px solid #526a8c; }
+  .progress span.done { background:var(--mint); border-color:var(--mint); }
+  .progress span.current { background:var(--yellow); border-color:var(--yellow); }
+  .case { border:1px solid var(--line); background:var(--panel2); padding:18px; }
+  .case-head { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+  .emoji { width:54px; height:54px; display:grid; place-items:center; font-size:1.8rem; background:var(--panel); border:2px solid var(--line); }
+  .case h2 { color:var(--mint); font-size:1.05rem; margin:0 0 3px; }
+  .skill { color:var(--muted); font-size:.8rem; }
+  .case-file { border:1px dashed var(--line); background:var(--panel); padding:14px; margin:12px 0 18px; }
+  .case-file strong { display:block; color:var(--yellow); font-size:.78rem; margin-bottom:7px; }
+  .question { font-weight:bold; margin-bottom:12px; }
+  .choices { display:grid; gap:10px; }
+  .choice { width:100%; text-align:left; display:flex; gap:12px; align-items:flex-start; color:var(--text); background:var(--panel3); border:1px solid var(--line); padding:12px; border-radius:2px; }
+  .letter { flex:0 0 30px; height:30px; display:grid; place-items:center; background:var(--panel); color:var(--mint); font-weight:bold; }
+  .choice.correct { border:2px solid var(--mint); background:#194b42; }
+  .choice.wrong { border:2px solid var(--pink); background:#5a303a; }
+  .choice:disabled { cursor:default; opacity:1; }
+  .feedback { margin-top:14px; padding:14px; background:var(--panel); border-left:4px solid var(--mint); }
+  .feedback.wrong { border-color:var(--yellow); }
+  .feedback h3 { color:var(--mint); margin-bottom:6px; font-size:1rem; }
+  .feedback.wrong h3 { color:var(--yellow); }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .actions button { flex:1; min-width:180px; }
+  .results { text-align:center; }
+  .award { font-size:3.5rem; margin:8px 0; }
+  .results h2 { color:var(--mint); }
+  .score { color:var(--yellow); font-size:clamp(1.7rem,6vw,2.5rem); font-weight:bold; }
+  .skill-list { text-align:left; margin:20px 0; padding:15px; background:var(--panel2); border:1px solid var(--line); }
+  .skill-row { display:flex; gap:10px; align-items:center; padding:7px 0; border-bottom:1px dashed #34435b; }
+  .skill-row:last-child { border-bottom:0; }
+  .skill-row .status { margin-left:auto; color:var(--mint); }
+  .reflection { text-align:left; margin-top:18px; padding:16px; background:var(--panel2); border:1px solid var(--line); }
+  .reflection label { display:block; margin-bottom:8px; font-weight:bold; }
+  textarea { width:100%; min-height:90px; padding:10px; color:var(--text); background:var(--panel); border:1px solid var(--line); font:inherit; resize:vertical; }
+  .foot { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:.72rem; margin-top:18px; }
+  .hidden { display:none !important; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  @media (max-width:540px) {
+    .wrap { width:min(100% - 18px,900px); margin:12px auto 24px; }
+    .hero { align-items:flex-start; gap:12px; }
+    .robot { flex-basis:65px; width:65px; height:65px; font-size:2.2rem; }
+    .shell { padding:15px; }
+    .case { padding:13px; }
+    .topbar { font-size:.68rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { transition:none !important; scroll-behavior:auto !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <span class="pill">◆ DIGITAL WELL-BEING LAB</span>
+    <span class="pill">OFFLINE-READY / v1.0</span>
+  </div>
+  <main class="shell">
+    <header class="hero">
+      <div class="robot" aria-hidden="true">🤖</div>
+      <div>
+        <h1>BUG_HUNTER.exe</h1>
+        <p class="subtitle">DETEKTIF EMOSI DIGITAL</p>
+        <p class="terminal">> SYSTEM: READY_TO_DEBUG_HUMAN_INTERACTIONS</p>
+      </div>
+    </header>
+
+    <section id="welcome" class="intro">
+      <h2>▶ MISI KAMU, DETEKTIF!</h2>
+      <p>Dalam pemrograman, <em>bug</em> adalah kesalahan yang perlu diperbaiki. Di game ini, kamu akan menemukan “bug sosial” dalam situasi pembelajaran Informatika dan memilih cara menyelesaikannya dengan bijak.</p>
+      <ul>
+        <li>5 misi, masing-masing mewakili satu kompetensi sosial emosional.</li>
+        <li>Jawaban tepat mendapat 100 XP.</li>
+        <li>Di akhir permainan, tulis refleksi singkat tentang tindakan yang akan kamu praktikkan.</li>
+      </ul>
+      <button id="startBtn" class="primary start">▶ MULAI PETUALANGAN</button>
+    </section>
+
+    <section id="game" class="hidden" aria-live="polite">
+      <div class="game-head">
+        <span id="level" class="level">LEVEL 1 / 5</span>
+        <span id="scoreLabel">★ SKOR: 0 XP</span>
+      </div>
+      <div id="progress" class="progress" aria-label="Kemajuan misi"></div>
+      <div class="case">
+        <div class="case-head">
+          <div id="missionIcon" class="emoji" aria-hidden="true">🧠</div>
+          <div>
+            <h2 id="missionTitle">MISI 01 — EMOTION SCANNER</h2>
+            <div id="missionSkill" class="skill">Kompetensi: Kesadaran diri</div>
+          </div>
+        </div>
+        <div class="case-file">
+          <strong>CASE FILE // TEMUKAN BUG</strong>
+          <div id="scene"></div>
+        </div>
+        <div id="question" class="question"></div>
+        <div id="choices" class="choices"></div>
+        <div id="feedback" class="feedback hidden" role="status" aria-live="polite">
+          <h3 id="feedbackTitle"></h3>
+          <p id="feedbackText" style="margin:0"></p>
+        </div>
+        <div id="nextWrap" class="actions hidden">
+          <button id="nextBtn" class="primary">MISI BERIKUTNYA →</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="results" class="hidden results" aria-live="polite">
+      <div id="award" class="award">🏆</div>
+      <h2 id="rank">DIGITAL WELL-BEING HERO!</h2>
+      <p>Misi selesai: 5 dari 5</p>
+      <div id="finalScore" class="score">500 / 500 XP</div>
+      <p id="resultMessage"></p>
+      <div class="skill-list">
+        <h3 style="color:var(--mint);margin-bottom:8px">HASIL MISI</h3>
+        <div id="skillResults"></div>
+      </div>
+      <div class="reflection">
+        <label for="reflectionText">📝 REFLEKSI DETEKTIF</label>
+        <p style="color:var(--muted);font-size:.88rem">Tuliskan satu tindakan nyata yang akan kamu lakukan untuk membuat kerja kelompok Informatika lebih aman, nyaman, dan saling menghargai.</p>
+        <textarea id="reflectionText" placeholder="Contoh: Saya akan memberi masukan tentang kode teman dengan bahasa yang sopan..."></textarea>
+        <div class="actions">
+          <button id="downloadBtn" class="secondary">⬇ SIMPAN REFLEKSI (.TXT)</button>
+          <button id="restartBtn" class="primary">↻ MAIN LAGI</button>
+        </div>
+        <p id="downloadNote" class="skill" style="margin:12px 0 0">Refleksi hanya diproses di browser ini dan tidak dikirim ke server.</p>
+      </div>
+    </section>
+    <footer class="foot">
+      <span>SMAN 12 BANDUNG • INFORMATIKA XI.1 IPS</span>
+      <span>[ PSE MODULE // BUILD KINDER DIGITAL SPACES ]</span>
+    </footer>
+  </main>
+</div>
+<script>
+const missions = [
+  {
+    title:"MISI 01 — EMOTION SCANNER", skill:"Kesadaran diri", icon:"🧠",
+    scene:"Saat kerja kelompok coding, program buatanmu mengalami error. Temanmu sudah berhasil menjalankan programnya, sedangkan punyamu belum berhasil.",
+    question:"Apa langkah pertama yang paling tepat?",
+    options:[
+      "Menyadari bahwa aku merasa kecewa, lalu mengenali apa yang membuatku kesulitan.",
+      "Menyalahkan komputer karena programku tidak berjalan.",
+      "Berpura-pura tidak peduli dan meninggalkan kelompok."
+    ], correct:0,
+    explain:"Detektif hebat mengenali emosi dan penyebabnya sebelum menentukan tindakan."
+  },
+  {
+    title:"MISI 02 — CALM THE SYSTEM", skill:"Pengelolaan diri", icon:"⚙️",
+    scene:"Ketika presentasi, teman satu kelompok mengubah kode tanpa berdiskusi. Kamu merasa kesal dan ingin langsung membentaknya.",
+    question:"Bagaimana cara mengelola emosimu?",
+    options:[
+      "Langsung membalas dengan kata-kata keras agar dia mengerti.",
+      "Berhenti sejenak, mengatur napas, lalu menyampaikan keberatan dengan tenang.",
+      "Tidak berbicara lagi dengan teman itu selama proyek berlangsung."
+    ], correct:1,
+    explain:"Jeda dan pengaturan napas membantu kita memilih respons yang lebih baik daripada bereaksi spontan."
+  },
+  {
+    title:"MISI 03 — EMPATHY DETECTOR", skill:"Kesadaran sosial", icon:"💚",
+    scene:"Seorang teman kesulitan memahami kode C++. Beberapa anggota kelompok menertawakannya karena jawabannya salah.",
+    question:"Apa yang sebaiknya kamu lakukan?",
+    options:[
+      "Ikut tertawa supaya suasana kelompok terasa ramai.",
+      "Mengambil alih semua tugasnya agar kelompok cepat selesai.",
+      "Memahami bahwa setiap orang belajar dengan kecepatan berbeda dan menawarkan bantuan tanpa merendahkan."
+    ], correct:2,
+    explain:"Kesadaran sosial berarti memahami perasaan dan kebutuhan orang lain serta menghargai perbedaan."
+  },
+  {
+    title:"MISI 04 — TEAMWORK PROTOCOL", skill:"Keterampilan berelasi", icon:"🤝",
+    scene:"Program kelompokmu menghasilkan error. Kamu menemukan bahwa kode temanmu menjadi penyebabnya. Temanmu terlihat malu.",
+    question:"Bagaimana cara memberikan umpan balik?",
+    options:[
+      "Menunjukkan bagian kode yang perlu diperbaiki dengan bahasa sopan dan mengajak teman mencari solusi bersama.",
+      "Berkata bahwa dia tidak cocok belajar pemrograman.",
+      "Menghapus kodenya diam-diam tanpa menjelaskan kesalahannya."
+    ], correct:0,
+    explain:"Komunikasi yang santun, mendengarkan, dan memecahkan masalah bersama memperkuat hubungan dalam kelompok."
+  },
+  {
+    title:"MISI 05 — RESPONSIBLE DECISION", skill:"Pengambilan keputusan bertanggung jawab", icon:"🛡️",
+    scene:"Seorang teman mengirim tangkapan layar berisi kesalahan kode milik teman lain ke grup kelas disertai komentar yang mengejek. Kamu diminta ikut menyebarkannya.",
+    question:"Keputusan mana yang paling bertanggung jawab?",
+    options:[
+      "Menyebarkannya ke grup lain agar semua tahu.",
+      "Tidak ikut menyebarkan, mengingatkan teman secara baik, dan mendukung teman yang dirugikan.",
+      "Membalas dengan menyebarkan kesalahan kode milik orang yang mengejek."
+    ], correct:1,
+    explain:"Keputusan yang bertanggung jawab mempertimbangkan dampak tindakan, privasi, martabat orang lain, dan keamanan ruang digital."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answers = Array(missions.length).fill(null);
+const $ = id => document.getElementById(id);
+
+function show(section) {
+  ["welcome","game","results"].forEach(id => $(id).classList.toggle("hidden", id !== section));
+}
+function renderProgress() {
+  $("progress").innerHTML = "";
+  missions.forEach((m, i) => {
+    const segment = document.createElement("span");
+    if (i < current) segment.className = "done";
+    else if (i === current) segment.className = "current";
+    segment.setAttribute("aria-label", `Misi ${i+1}${i < current ? " selesai" : i === current ? " sedang dikerjakan" : ""}`);
+    $("progress").appendChild(segment);
+  });
+}
+function renderMission() {
+  const m = missions[current];
+  $("level").textContent = `LEVEL ${current+1} / ${missions.length}`;
+  $("scoreLabel").textContent = `★ SKOR: ${score} XP`;
+  renderProgress();
+  $("missionIcon").textContent = m.icon;
+  $("missionTitle").textContent = m.title;
+  $("missionSkill").textContent = `Kompetensi: ${m.skill}`;
+  $("scene").textContent = m.scene;
+  $("question").textContent = m.question;
+  $("choices").innerHTML = "";
+  $("feedback").classList.add("hidden");
+  $("nextWrap").classList.add("hidden");
+
+  m.options.forEach((option, i) => {
+    const button = document.createElement("button");
+    button.className = "choice";
+    button.innerHTML = `<span class="letter">${String.fromCharCode(65+i)}</span><span></span>`;
+    button.querySelector("span:last-child").textContent = option;
+    button.addEventListener("click", () => chooseAnswer(i));
+    $("choices").appendChild(button);
+  });
+}
+function chooseAnswer(index) {
+  if (answers[current] !== null) return;
+  const m = missions[current];
+  answers[current] = index;
+  const correct = index === m.correct;
+  if (correct) score += 100;
+  [...$("choices").children].forEach((button, i) => {
+    button.disabled = true;
+    if (i === m.correct) button.classList.add("correct");
+    if (i === index && !correct) button.classList.add("wrong");
+  });
+  $("scoreLabel").textContent = `★ SKOR: ${score} XP`;
+  $("feedback").classList.remove("hidden", "wrong");
+  if (!correct) $("feedback").classList.add("wrong");
+  $("feedbackTitle").textContent = correct ? "✓ BUG BERHASIL DIPERBAIKI!" : "↻ DEBUGGING BELUM SELESAI";
+  $("feedbackText").textContent = correct
+    ? m.explain
+    : `Solusi terbaik adalah opsi ${String.fromCharCode(65+m.correct)}. ${m.explain}`;
+  $("nextBtn").textContent = current === missions.length-1 ? "LIHAT HASIL AKHIR →" : "MISI BERIKUTNYA →";
+  $("nextWrap").classList.remove("hidden");
+  $("nextBtn").focus();
+}
+function finishGame() {
+  show("results");
+  $("finalScore").textContent = `${score} / ${missions.length*100} XP`;
+  const rank = score >= 400 ? "DIGITAL WELL-BEING HERO!" : score >= 300 ? "JUNIOR BUG HUNTER!" : "DEBUGGING IN PROGRESS!";
+  $("rank").textContent = rank;
+  $("award").textContent = score >= 400 ? "🏆" : score >= 300 ? "🌟" : "🛠️";
+  $("resultMessage").textContent = score >= 400
+    ? "Kamu telah memilih tindakan yang mendukung ruang belajar digital yang positif. Terus praktikkan dalam kehidupan sehari-hari!"
+    : "Setiap kesalahan adalah kesempatan belajar. Diskusikan kembali pilihan yang tepat, lalu coba lagi.";
+  $("skillResults").innerHTML = "";
+  missions.forEach((m,i) => {
+    const row = document.createElement("div");
+    row.className = "skill-row";
+    const icon = document.createElement("span"); icon.textContent = m.icon;
+    const label = document.createElement("span"); label.textContent = m.skill;
+    const status = document.createElement("span"); status.className = "status";
+    status.textContent = answers[i] === m.correct ? "✓ TEPAT" : "↻ LATIH LAGI";
+    if (answers[i] !== m.correct) status.style.color = "var(--yellow)";
+    row.append(icon,label,status);
+    $("skillResults").appendChild(row);
+  });
+}
+$("startBtn").addEventListener("click", () => { current=0; score=0; answers=Array(missions.length).fill(null); show("game"); renderMission(); });
+$("nextBtn").addEventListener("click", () => {
+  if (current < missions.length-1) { current++; renderMission(); $("missionTitle").focus?.(); }
+  else finishGame();
+});
+$("restartBtn").addEventListener("click", () => {
+  current=0; score=0; answers=Array(missions.length).fill(null); $("reflectionText").value=""; show("welcome");
+  $("startBtn").focus();
+});
+$("downloadBtn").addEventListener("click", () => {
+  const reflection = $("reflectionText").value.trim();
+  if (!reflection) {
+    $("downloadNote").textContent = "Isi refleksi terlebih dahulu sebelum menyimpan.";
+    $("reflectionText").focus();
+    return;
+  }
+  const text = [
+    "BUG HUNTER — DETEKTIF EMOSI DIGITAL",
+    "Informatika XI.1 IPS — SMAN 12 Bandung",
+    `Skor latihan: ${score} / ${missions.length*100} XP`,
+    "",
+    "HASIL MISI:",
+    ...missions.map((m,i) => `${i+1}. ${m.skill}: ${answers[i] === m.correct ? "Jawaban tepat" : "Perlu latihan kembali"}`),
+    "",
+    "REFLEKSI MURID:",
+    reflection,
+    "",
+    "Catatan: skor ini merupakan hasil latihan pilihan situasional, bukan diagnosis emosi."
+  ].join("\\n");
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "refleksi-bug-hunter.txt";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  $("downloadNote").textContent = "File refleksi berhasil disiapkan untuk diunduh oleh browser.";
+});
+</script>
+</body>
+</html>
